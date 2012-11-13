@@ -245,7 +245,7 @@ function applyTransform(transform, value) {
 }
 
 // Returns a future for every completed future in an array
-function all(list) {
+function whenAll(list) {
 
     var count = list.length,
         promise = new Promise(),
@@ -277,7 +277,7 @@ function all(list) {
 }
 
 // Returns a future for the first completed future in an array
-function any(list) {
+function whenAny(list) {
 
     if (list.length === 0)
         throw new Error(EMPTY_LIST_MSG);
@@ -367,8 +367,8 @@ asap = global => {
 }(this);
 
 Promise.when = when;
-Promise.any = any;
-Promise.all = all;
+Promise.whenAny = whenAny;
+Promise.whenAll = whenAll;
 Promise.failure = failure;
 
 export Promise;
