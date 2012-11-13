@@ -1,18 +1,4 @@
 "use strict";
-/*
-
-== TODO ==
-
-- What relationship does this work have with typical when/then constructs,
-  which accept both an error handler and a sucess handler as separate arguments?
-  What are the arguments against accepting an additional error argument, instead
-  of a separate error handler?
-
-- We currently don't support assimilation of then'ables from other libraries.
-  It would be trivial to add, accept for the complication that then'ables will
-  generally accept two arguments instead of our one.
-
-*/
 
 var identity = obj => obj,
     freeze = Object.freeze || identity,

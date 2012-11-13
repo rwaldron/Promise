@@ -11,20 +11,6 @@ function __require(i, obj) {
 
 __modules[0] = function(exports) {
 var __this = this; "use strict";
-/*
-
-== TODO ==
-
-- What relationship does this work have with typical when/then constructs,
-  which accept both an error handler and a sucess handler as separate arguments?
-  What are the arguments against accepting an additional error argument, instead
-  of a separate error handler?
-
-- We currently don't support assimilation of then'ables from other libraries.
-  It would be trivial to add, accept for the complication that then'ables will
-  generally accept two arguments instead of our one.
-
-*/
 
 var identity = (function(obj) { return obj; }),
     freeze = Object.freeze || identity,
@@ -257,7 +243,7 @@ function applyTransform(transform, value) {
 }
 
 // Returns a future for every completed future in an array
-function all(list) {
+function whenAll(list) {
 
     var count = list.length,
         promise = new Promise(),
@@ -289,7 +275,7 @@ function all(list) {
 }
 
 // Returns a future for the first completed future in an array
-function any(list) {
+function whenAny(list) {
 
     if (list.length === 0)
         throw new Error(EMPTY_LIST_MSG);
@@ -379,8 +365,8 @@ asap = (function(global) {
 })(this);
 
 Promise.when = when;
-Promise.any = any;
-Promise.all = all;
+Promise.whenAny = whenAny;
+Promise.whenAll = whenAll;
 Promise.failure = failure;
 
 
