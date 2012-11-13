@@ -1,26 +1,19 @@
-/*=es6now=*/(function(fn, deps) { if (typeof exports !== 'undefined') fn.call(typeof global === 'object' ? global : this, require, exports); else if (typeof MODULE === 'function') MODULE(fn, deps); else if (typeof define === 'function' && define.amd) define(['require', 'exports'].concat(deps), fn); else if (typeof window !== 'undefined' && "") fn.call(window, null, window[""] = {}); else fn.call(window || this, null, {}); })(function(require, exports) { 
+/*=es6now=*/(function(fn, deps) { if (typeof exports !== 'undefined') fn.call(typeof global === 'object' ? global : this, require, exports); else if (typeof MODULE === 'function') MODULE(fn, deps); else if (typeof define === 'function' && define.amd) define(['require', 'exports'].concat(deps), fn); else if (typeof window !== 'undefined' && "MoonUnit") fn.call(window, null, window["MoonUnit"] = {}); else fn.call(window || this, null, {}); })(function(require, exports) { 
 
-var __modules = [], __exports = [], __global = this, __undef; 
+var __modules = [], __exports = [], __global = this; 
 
 function __require(i, obj) { 
-  var e = __exports[i]; 
-  
-  if (e !== __undef) 
-    return e; 
-  
-  __modules[i].call(__global, __exports[i] = (obj || {})); 
-  
-  if (e !== __undef) 
-    __exports[i] = e; 
-  
-  return __exports[i]; 
+    var e = __exports; 
+    if (e[i] !== void 0) return e[i]; 
+    __modules[i].call(__global, e[i] = (obj || {})); 
+    return e[i]; 
 } 
 
 __modules[0] = function(exports) {
 "use strict";
 
 var Runner = __require(1).Runner;
-var Logger = __require(5).Logger;
+var Logger = __require(4).Logger;
 
 function run(tests) {
 
@@ -35,9 +28,9 @@ exports.Runner = Runner;
 __modules[1] = function(exports) {
 var __this = this; "use strict";
 
-var _M0 = __require(2), defer = _M0.defer, when = _M0.when;
-var Test = __require(4).Test;
-var Logger = __require(5).Logger;
+var Promise = __require(2).Promise;
+var Test = __require(3).Test;
+var Logger = __require(4).Logger;
 
 var Runner = es6now.Class(null, function(__super) { return {
 
@@ -49,7 +42,7 @@ var Runner = es6now.Class(null, function(__super) { return {
     
     inject: function(obj) { var __this = this; 
     
-        Object.keys(obj || {}).forEach((function(k) { "use strict"; return __this.injections[k] = obj[k]; }));
+        Object.keys(obj || {}).forEach((function(k) { return __this.injections[k] = obj[k]; }));
         return this;
     },
     
@@ -57,7 +50,7 @@ var Runner = es6now.Class(null, function(__super) { return {
     
         this.logger.clear();
         
-        return this._visit(tests).then((function(val) { "use strict";
+        return this._visit(tests).then((function(val) { 
         
             __this.logger.end();
             return __this;
@@ -66,11 +59,11 @@ var Runner = es6now.Class(null, function(__super) { return {
     
     _exec: function(node, key) { var __this = this; 
     
-        var test = new Test((function(data) { "use strict"; __this.logger.log(data); })),
-            async = defer();
+        var test = new Test((function(data) {  __this.logger.log(data); })),
+            promise = new Promise;
         
         // Inject dependencies into test object
-        Object.keys(this.injections).forEach((function(k) { "use strict";
+        Object.keys(this.injections).forEach((function(k) { 
         
             if (test[k] === void 0)
                 test[k] = __this.injections[k];
@@ -78,25 +71,25 @@ var Runner = es6now.Class(null, function(__super) { return {
         
         test.name(key);
         
-        return when(null, (function(val) { "use strict";
+        return Promise.when(null, (function(val) { 
         
             if (node[key].length < 2) {
             
                 node[key](test);
-                async.resolve(null);
+                promise.resolve(null);
                 
             } else {
             
-                node[key](test, async.resolve);
+                node[key](test, promise.resolve);
             }
             
-            return async.promise;
+            return promise.future;
         }));
     },
     
     _visit: function(node) { var __this = this; 
         
-        return Object.keys(node).reduce((function(prev, k) { "use strict"; return prev.then((function(val) { "use strict";
+        return Object.keys(node).reduce((function(prev, k) { return prev.then((function(val) { 
             
             if (typeof node[k] === "function") {
         
@@ -105,10 +98,10 @@ var Runner = es6now.Class(null, function(__super) { return {
             } else {
             
                 __this.logger.pushGroup(k);
-                return __this._visit(node[k]).then((function(val) { "use strict"; return __this.logger.popGroup(); }));
+                return __this._visit(node[k]).then((function(val) { return __this.logger.popGroup(); }));
             }
             
-        })); }), when()).then((function(val) { "use strict"; return __this; }));
+        })); }), Promise.when(null)).then((function(val) { return __this; }));
     }
 }});
 
@@ -116,312 +109,289 @@ exports.Runner = Runner;
 };
 
 __modules[2] = function(exports) {
-var _M0 = __require(3); Object.keys(_M0).forEach(function(k) { exports[k] = _M0[k]; });
-};
-
-__modules[3] = function(exports) {
 var __this = this; "use strict";
 
-var identity = (function(obj) { "use strict"; return obj; }),
-	freeze = Object.freeze || identity,
-	queue = [],
-	timer = 0,
-	uid = 0,
-	enqueue,
-	undefined;
+var identity = (function(obj) { return obj; }),
+    freeze = Object.freeze || identity,
+    queue = [],
+    waiting = false,
+    asap;
 
 // UUID property names used for duck-typing
-var ON_COMPLETE = "07b06b7e-3880-42b1-ad55-e68a77514eb9",
-	IS_REJECTION = "7d24bf0f-d8b1-4783-b594-cec32313f6bc";
+var DISPATCH = "07b06b7e-3880-42b1-ad55-e68a77514eb9",
+    IS_FAILURE = "7d24bf0f-d8b1-4783-b594-cec32313f6bc";
 
 var EMPTY_LIST_MSG = "List cannot be empty.",
     CYCLE_MSG = "A promise cycle was detected.";
 
 var THROW_DELAY = 50;
 
-// Returns a new promise identifier
-function newID() { return uid++; }
-
 // Enqueues a message
-function dispatch(promise, args) {
+function enqueue(future, args) {
 
-	queue.push({ promise: promise, args: args });
-	timer = timer || enqueue(flush);
+    queue.push({ fn: future[DISPATCH], args: args });
+    
+    if (!waiting) {
+    
+        waiting = true;
+        asap(flush);
+    }
 }
 
 // Flushes the message queue
 function flush() {
 
-	var msg, count;
-	
-	timer = 0;
+    var msg, count;
+    
+    waiting = false;
 
-	// Send each message in queue
-	for (count = queue.length; count > 0; --count) {
-	
-		msg = queue.shift();
-		msg.promise[ON_COMPLETE].apply(undefined, msg.args);
-	}
+    while (queue.length > 0) {
+        
+        // Send each message in queue
+        for (count = queue.length; count > 0; --count) {
+        
+            msg = queue.shift();
+            msg.fn.apply(void 0, msg.args);
+        }
+    }
 }
 
-// Returns a cycle error rejection
+// Returns a cycle error
 function cycleError() {
 
-	return rejection(CYCLE_MSG);
+    return failure(CYCLE_MSG);
 }
 
-// Promise constructor
-function Promise(onComplete, isRejection) { var __this = this; 
-	
-	this[ON_COMPLETE] = onComplete;
-	this[IS_REJECTION] = !!isRejection;
-	this.then = (function(fn) { "use strict"; return when(__this, fn); });
-	
-	freeze(this);
+// Future constructor
+function Future(dispatch) { var __this = this; 
+    
+    this[DISPATCH] = dispatch;
+    this.then = (function(a, b) { return when(__this, a, b); });
 }
 
 // Begins a deferred operation
-function defer(onQueue) {
+function Promise(onQueue) {
 
-	var id = newID(),
-		pending = [],
-		throwable = true,
-		resolved = null,
-		promise;
+    var token = {},
+        pending = [],
+        throwable = true,
+        next = null;
 
-	promise = new Promise((function(success, error, src) { "use strict";
-	
-		var msg = [success, error, src || id];
-		
-		if (error && throwable)
-			throwable = false;
-		
-		if (pending) {
-		
-			pending.push(msg);
-			
-			if (onQueue)
-				onQueue(success, error);
-		
-		} else {
-		
-			// If a cycle is detected, convert resolution to a rejection
-			if (src === id) {
-			
-				resolved = cycleError();
-				maybeThrow();
-			}
-			
-			dispatch(resolved, msg);
-		}
-	}));
-	
-	return {
-		promise: promise,
-		resolve: resolve,
-		reject: reject
-	};
-	
-	// Resolves the promise
-	function resolve(value) {
-	
-		var i, list;
-	
-		if (!pending)
-			return;
-		
-		list = pending;
-		pending = false;
-		
-		// Create promise from the resolved value
-		resolved = toPromise(value);
+    this.future = freeze(new Future(dispatch));
+    this.resolve = resolve;
+    this.reject = reject;
+    
+    freeze(this);
+    
+    // Dispatch function for future
+    function dispatch(success, error, src) {
+    
+        var msg = [success, error, src || token];
+        
+        if (error)
+            throwable = false;
+        
+        if (pending) {
+        
+            pending.push(msg);
+            
+            if (onQueue)
+                onQueue(success, error);
+        
+        } else {
+        
+            // If a cycle is detected, convert resolution to a rejection
+            if (src === token) {
+            
+                next = cycleError();
+                maybeThrow();
+            }
+            
+            enqueue(next, msg);
+        }
+    }
+    
+    // Resolves the promise
+    function resolve(value) {
+    
+        var i, list;
+    
+        if (!pending)
+            return;
+        
+        list = pending;
+        pending = false;
+        
+        // Create a future from the provided value
+        next = toFuture(value);
 
-		// Send internally queued messages to the resolved value
-		for (i = 0; i < list.length; ++i)
-			dispatch(resolved, list[i]);
-		
-		maybeThrow();
-	}
-	
-	// Resolves the promise with a rejection
-	function reject(error) {
-	
-		resolve(rejection(error));
-	}
-	
-	// Throws an error if the promise is rejected and there
-	// are no error handlers
-	function maybeThrow() {
-	
-		if (!throwable || !isRejection(resolved))
-			return;
-		
-		setTimeout((function() { "use strict";
-		
-			var error = null;
-			
-			// Get the error value
-			resolved[ON_COMPLETE](null, (function(val) { "use strict"; error = val }));
-			
-			// Throw it
-			if (error && throwable)
-				throw error;
-			
-		}), THROW_DELAY);
-	}
+        // Send internally queued messages to the next future
+        for (i = 0; i < list.length; ++i)
+            enqueue(next, list[i]);
+        
+        maybeThrow();
+    }
+    
+    // Resolves the promise with a rejection
+    function reject(error) {
+    
+        resolve(failure(error));
+    }
+    
+    // Throws an error if the promise is rejected and there
+    // are no error handlers
+    function maybeThrow() {
+    
+        if (!throwable || !isFailure(next))
+            return;
+        
+        setTimeout((function() { 
+        
+            var error = null;
+            
+            // Get the error value
+            next[DISPATCH](null, (function(val) { return error = val; }));
+            
+            // Throw it
+            if (error && throwable)
+                throw error;
+            
+        }), THROW_DELAY);
+    }
 }
 
-// Returns true if an object is a promise
-function isPromise(obj) {
+// Coerces an object to a future
+function toFuture(obj) {
 
-	return obj && obj[ON_COMPLETE];
+    if (obj && obj[DISPATCH])
+        return obj;
+    
+    if (obj && obj.then) {
+    
+        var promise = new Promise();
+        obj.then(promise.resolve, promise.reject);
+        return promise.future;
+    }
+    
+    // Wrap a value in an immediate future
+    return freeze(new Future((function(success) { return success && success(obj); })));
 }
 
-// Returns true if a promise is a rejection
-function isRejection(obj) {
+// Returns true if the object is a failed future
+function isFailure(obj) {
 
-	return obj && obj[IS_REJECTION] === true;
+    return obj && obj[IS_FAILURE];
 }
 
-// Converts an object to a promise
-function toPromise(obj) {
+// Creates a failure Future
+function failure(value) {
 
-	if (isPromise(obj))
-		return obj;
-	
-	// If object is tagged as a rejection, then interpret as a rejection
-	if (isRejection(obj))
-	    return rejection(obj);
-	
-	// Wrap a value in a self-resolving promise
-	return new Promise((function(success) { "use strict"; success && success(obj) }));
+    var future = new Future((function(success, error) { return error && error(value); }));
+    
+    // Tag the future as a failure
+    future[IS_FAILURE] = true;
+    
+    return freeze(future);
 }
 
-// Creates a rejection Promise
-function rejection(value) {
-
-	// Convert falsey values to empty string
-	value = value || "";
-	
-	// Convert strings to Error instances
-	if (typeof value === "string")
-		value = new Error(value);
-	
-	// Tag the value as a rejection so that it can be returned
-	// from an error handler
-	value[IS_REJECTION] = true;
-	
-	return new Promise((function(success, error) { "use strict"; error && error(value) }), true);
+// Registers a callback for completion when a future is complete
+function when(obj, onSuccess, onFail) {
+    
+    onSuccess || (onSuccess = identity);
+    
+    var resolve = (function(value) { return finish(value, onSuccess); }),
+        reject = (function(value) { return finish(value, onFail); }),
+        promise = new Promise(onQueue),
+        target = toFuture(obj),
+        done = false;
+    
+    onQueue(onSuccess, onFail);
+    
+    return promise.future;
+    
+    function onQueue(success, error) {
+    
+        if (success && resolve) {
+        
+            enqueue(target, [ resolve, null ]);
+            resolve = null;
+        }
+        
+        if (error && reject) {
+        
+            enqueue(target, [ null, reject ]);
+            reject = null;
+        }
+    }
+    
+    function finish(value, transform) {
+    
+        if (!done) {
+        
+            done = true;
+            promise.resolve(applyTransform(transform, value));
+        }
+    }
 }
 
-// Registers a callback for completion when a promise is resolved
-function when(obj, onComplete) {
+// Applies a promise transformation function
+function applyTransform(transform, value) {
 
-	var done = false, 
-		d = defer(onQueue),
-		f = toPromise(obj),
-		onError = null;
-	
-	var resolve = (function(value) { "use strict"; finish(value, onComplete) }),
-		reject = (function(value) { "use strict"; finish(value, onError) });
-
-	// Set default transform
-	onComplete = onComplete || identity;
-	
-	// Wrap error handling transform
-	if (onComplete.length > 1)
-		onError = (function(value) { "use strict"; return onComplete(undefined, value); });
-	
-	onQueue(onComplete, onError);
-	
-	return d.promise;
-	
-	function onQueue(success, error) {
-	
-		if (success && resolve) {
-		
-			dispatch(f, [ resolve, null ]);
-			resolve = null;
-		}
-		
-		if (error && reject) {
-		
-			dispatch(f, [ null, reject ]);
-			reject = null;
-		}
-	}
-	
-	function finish(value, transform) {
-	
-		if (done) return;
-		done = true;
-		
-		try { d.resolve((transform || rejection)(value)); }
-		catch (ex) { d.reject(ex); }
-	}
+    try { return (transform || failure)(value); }
+    catch (ex) { return failure(ex); }
 }
 
-// Returns a promise for every resolved value in an array
-function whenAll(list, onComplete) {
+// Returns a future for every completed future in an array
+function whenAll(list) {
 
-	var count = list.length,
-		d = defer(),
-		out = [],
-		i;
-	
-	for (i = 0; i < list.length; ++i)
-		waitFor(list[i], i);
-	
-	if (count === 0)
-		d.resolve(out);
-	
-	return when(d.promise, onComplete);
-	
-	function waitFor(p, index) {
-	
-		when(p, (function(val, err) { "use strict";
-		
-			if (err) d.reject(err);
-			else out[index] = val;
-			
-			if (--count === 0)
-				d.resolve(out);
-		}));
-	}
+    var count = list.length,
+        promise = new Promise(),
+        out = [],
+        i;
+    
+    for (i = 0; i < list.length; ++i)
+        waitFor(list[i], i);
+    
+    if (count === 0)
+        promise.resolve(out);
+    
+    return promise.future;
+    
+    function waitFor(f, index) {
+    
+        when(f, (function(val) {  
+        
+            out[index] = val;
+            
+            if (--count === 0)
+                promise.resolve(out);
+        
+        }), (function(err) { 
+        
+            promise.reject(err);
+        }));
+    }
 }
 
-// Returns a promise for the first resolved value in an array
-function whenAny(list, onComplete) {
+// Returns a future for the first completed future in an array
+function whenAny(list) {
 
     if (list.length === 0)
-		throw new Error(EMPTY_LIST_MSG);
-	
-	var d = defer(), i;
-	
-	for (i = 0; i < list.length; ++i)
-		waitFor(list[i]);
-	
-	return when(d.promise, onComplete);
-	
-	function waitFor(p) {
-	
-		when(p, (function(val, err) { "use strict";
-		
-			if (err) d.reject(err);
-			else d.resolve(val);
-		}));
-	}
+        throw new Error(EMPTY_LIST_MSG);
+    
+    var promise = new Promise(), i;
+    
+    for (i = 0; i < list.length; ++i)
+        when(list[i], (function(val) { return promise.resolve(val); }), (function(err) { return promise.reject(err); }));
+    
+    return promise.future;
 }
-
-// Begins a sequence of asynchronous operations
-function begin(fn) { return when(null, fn); }
-
 
 // === Event Loop API ===
 
-enqueue = (function(global) { "use strict";
+asap = (function(global) { 
     
-    var msg = "AsyncFlow-" + (+new Date()) + Math.floor(Math.random() * 999999),
+    var msg = uuid(),
         process = global.process,
         window = global.window,
         msgChannel = null,
@@ -445,7 +415,7 @@ enqueue = (function(global) { "use strict";
             window.addEventListener("message", onmsg, true);
         }
         
-        return (function(fn) { "use strict";
+        return (function(fn) { 
         
             list.push(fn);
             
@@ -460,7 +430,7 @@ enqueue = (function(global) { "use strict";
     } else {
     
         // Legacy
-        return (function(fn) { "use strict"; return setTimeout(fn, 0); });
+        return (function(fn) { return setTimeout(fn, 0); });
     }
         
     function onmsg(evt) {
@@ -472,18 +442,37 @@ enqueue = (function(global) { "use strict";
         }
     }
     
+    function uuid() {
+    
+        return [32, 16, 16, 16, 48].map((function(bits) { return rand(bits); })).join("-");
+        
+        function rand(bits) {
+        
+            if (bits > 32) 
+                return rand(bits - 32) + rand(32);
+            
+            var str = (Math.random() * 0xffffffff >>> (32 - bits)).toString(16),
+                len = bits / 4 >>> 0;
+            
+            if (str.length < len) 
+                str = (new Array(len - str.length + 1)).join("0") + str;
+            
+            return str;
+        }
+    }
+    
 })(this);
 
+Promise.when = when;
+Promise.whenAny = whenAny;
+Promise.whenAll = whenAll;
+Promise.failure = failure;
 
 
-exports.defer = defer;
-exports.begin = begin;
-exports.when = when;
-exports.whenAny = whenAny;
-exports.whenAll = whenAll;
+exports.Promise = Promise;
 };
 
-__modules[4] = function(exports) {
+__modules[3] = function(exports) {
 "use strict";
 
 var OP_toString = Object.prototype.toString,
@@ -627,7 +616,7 @@ var Test = es6now.Class(null, function(__super) { return {
 		}
 		
 		obj = { name: this._name, pass: pass, method: method };
-		Object.keys(data).forEach((function(k) { "use strict"; return obj[k] || (obj[k] = data[k]); }));
+		Object.keys(data).forEach((function(k) { return obj[k] || (obj[k] = data[k]); }));
 		
 		this._log(obj);
 		this._not = false;
@@ -639,11 +628,11 @@ var Test = es6now.Class(null, function(__super) { return {
 exports.Test = Test;
 };
 
-__modules[5] = function(exports) {
+__modules[4] = function(exports) {
 "use strict";
 
-var HtmlLogger = __require(6).HtmlLogger;
-var NodeLogger = __require(7).NodeLogger;
+var HtmlLogger = __require(5).HtmlLogger;
+var NodeLogger = __require(6).NodeLogger;
 
 var Logger = (typeof this.process === "object" && process.cwd) ?
     NodeLogger :
@@ -652,7 +641,7 @@ var Logger = (typeof this.process === "object" && process.cwd) ?
 exports.Logger = Logger;
 };
 
-__modules[6] = function(exports) {
+__modules[5] = function(exports) {
 "use strict";
 
 var console = this.console || { log: function() {} },
@@ -756,7 +745,7 @@ var HtmlLogger = es6now.Class(null, function(__super) { return {
 exports.HtmlLogger = HtmlLogger;
 };
 
-__modules[7] = function(exports) {
+__modules[6] = function(exports) {
 "use strict";
 
 var NodeLogger = es6now.Class(null, function(__super) { return {

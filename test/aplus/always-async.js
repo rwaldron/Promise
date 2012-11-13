@@ -21,7 +21,7 @@ export var tests = {
         
         process.nextTick(() => { ++ticks });
 
-        test.Promise.failure().then(null, err => {
+        test.Promise.reject().then(null, err => {
         
             test.assert(ticks > 0);
             done();
