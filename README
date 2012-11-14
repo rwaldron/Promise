@@ -1,3 +1,66 @@
-== Promise ==
+== Promise v0.1.0 ==
 
-An implementation of promises and futures for Javascript.
+An implementation of promises and futures for Javascript.  To use, just
+grab the `Promise.js` file from the build directory.  It works as a script
+tag and as a Node module.
+
+
+=== new Promise() ===
+
+Creates a new promise object.  A promise can be in one of three states:  pending,
+fulfilled, or rejected.  A promise that is either fulfilled or rejected is called 
+"resolved".  You can query the promise for it's resolved value (which might be the
+expected value or an error) by using its associated future.
+
+
+=== promise.resolve(value) ===
+
+Resolves the promise with the specified value.  If the provided value is a 
+rejection, then the promise is "rejected".  Otherwise the promise is "fulfilled".
+If the promise has already been resolved, then this function will throw an error.
+
+
+=== promise.reject(error) ===
+
+Rejects the promise with the specified error.  If the promise has already been
+resolved, then this function will throw an error.
+
+
+=== promise.future ===
+
+The future associated with the promise.  The future can be used to query the
+resolved value of the promise.
+
+
+=== future.then(onSuccess, onFail = null) ===
+
+Registers callbacks that will execute when the future's value is available.
+If the future results in an error, then the `onFail` callback will be called.
+Otherwise the `onSuccess` callback will be called.  All callbacks execute
+asynchronously.
+
+Returns a future for the transformation applied by the callback functions.
+
+
+=== Promise.when(valueOrFuture) ===
+
+Returns a future for the specified argument.  If the argument is itself a
+future then it will be returned without modification.
+
+
+=== Promise.reject(error) ===
+
+Returns a future for the specified error.
+
+
+=== Promise.whenAll(array) ===
+
+Returns a future for an array which contains the eventual value for every
+future in the input array.  If any future in the input array fails, then
+the returned future fails.
+
+
+=== Promise.whenAny(array) ===
+
+Returns a future for the first resolved future in the input array.
+
