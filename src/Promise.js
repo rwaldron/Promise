@@ -11,6 +11,7 @@ var DISPATCH = "07b06b7e-3880-42b1-ad55-e68a77514eb9",
     IS_FAILURE = "7d24bf0f-d8b1-4783-b594-cec32313f6bc";
 
 var EMPTY_LIST_MSG = "List cannot be empty.",
+    WAS_RESOLVED_MSG = "The promise has already been resolved.",
     CYCLE_MSG = "A promise cycle was detected.";
 
 var THROW_DELAY = 50;
@@ -145,7 +146,7 @@ function Promise(onQueue) {
         var i, list;
     
         if (!pending)
-            return;
+            throw new Error(WAS_RESOLVED_MSG);
         
         list = pending;
         pending = false;
